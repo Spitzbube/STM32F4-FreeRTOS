@@ -8,25 +8,24 @@
 // Macro to use CCM (Core Coupled Memory) in STM32F4
 #define CCM_RAM __attribute__((section(".ccmram")))
 
-#define USB_TASK_STACK_SIZE 256
+#define FPU_TASK_STACK_SIZE 256
 
-StackType_t usbTaskStack[USB_TASK_STACK_SIZE] CCM_RAM;  // Put task stack in CCM
-StaticTask_t usbTaskBuffer CCM_RAM;  // Put TCB in CCM
+StackType_t fpuTaskStack[FPU_TASK_STACK_SIZE] CCM_RAM;  // Put task stack in CCM
+StaticTask_t fpuTaskBuffer CCM_RAM;  // Put TCB in CCM
 
 void init_USART2(void);
 
-void USB_Task(void* p);
+void test_FPU_test(void* p);
 
-int main(void)
-{
-//  SystemInit();
+int main(void) {
+  SystemInit();
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
   init_USART2();
 
   // Create a task
   // Stack and TCB are placed in CCM of STM32F4
   // The CCM block is connected directly to the core, which leads to zero wait states
-  xTaskCreateStatic(USB_Task, "USB", USB_TASK_STACK_SIZE, NULL, 1, usbTaskStack, &usbTaskBuffer);
+  xTaskCreateStatic(test_FPU_test, "FPU", FPU_TASK_STACK_SIZE, NULL, 1, fpuTaskStack, &fpuTaskBuffer);
 
   printf("System Started!\n");
   vTaskStartScheduler();  // should never return
@@ -106,6 +105,20 @@ void vApplicationGetTimerTaskMemory(StaticTask_t **ppxTimerTaskTCBBuffer, StackT
   *pulTimerTaskStackSize = configTIMER_TASK_STACK_DEPTH;
 }
 
+void test_FPU_test(void* p) {
+  float ff = 1.0f;
+  printf("Start FPU test task.\n");
+  for (;;) {
+    float s = sinf(ff);
+    ff += s;
+    // TODO some other test
+
+    vTaskDelay(1000);
+  }
+
+  vTaskDelete(NULL);
+}
+
 /*
  * Configure USART2(PA2=TX, PA3=RX) to redirect printf data to host PC.
  */
@@ -134,29 +147,4 @@ void init_USART2(void) {
   USART_InitStruct.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
   USART_Init(USART2, &USART_InitStruct);
   USART_Cmd(USART2, ENABLE);
-
-  // activate Interrupt channel
-  NVIC_InitTypeDef NVIC_InitStructure;
-  NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
-  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-  NVIC_Init(&NVIC_InitStructure);
-
-  // activate Interrupts
-  USART_ITConfig (USART2, USART_IT_RXNE, ENABLE);
 }
-
-void USART2_IRQHandler(void)
-{
-  if (USART_GetITStatus(USART2, USART_IT_RXNE))
-  {
-    USART_ClearITPendingBit(USART2, USART_IT_RXNE);
-    USART_SendData(USART2, '?');
-  }
-}
-
-
-
-
-

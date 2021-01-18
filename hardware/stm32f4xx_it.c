@@ -30,6 +30,11 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_it.h"
 
+#include "usb_core.h"
+extern USB_OTG_CORE_HANDLE           USB_OTG_dev;
+extern uint32_t USBD_OTG_ISR_Handler (USB_OTG_CORE_HANDLE *pdev);
+
+
 /** @addtogroup Template_Project
   * @{
   */
@@ -165,6 +170,23 @@ void DebugMon_Handler(void)
 /*void PPP_IRQHandler(void)
 {
 }*/
+
+
+/**
+* @brief  This function handles OTG_HS Handler.
+* @param  None
+* @retval None
+*/
+#ifdef USE_USB_OTG_HS  
+void OTG_HS_IRQHandler(void)
+#else
+void OTG_FS_IRQHandler(void)
+#endif
+{
+  USBD_OTG_ISR_Handler (&USB_OTG_dev);
+}
+
+
 
 /**
   * @}
