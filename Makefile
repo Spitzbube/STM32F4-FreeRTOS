@@ -5,8 +5,8 @@ TOOLCHAIN_PATH:=$(TOOLCHAIN_ROOT)/bin
 TOOLCHAIN_PREFIX:=arm-none-eabi
 
 # Optimization level, can be [0, 1, 2, 3, s].
-OPTLVL:=0
-DBG:=-g
+OPTLVL:=1 #0
+DBG:=#-g
 
 FREERTOS:=$(CURDIR)/FreeRTOS
 STARTUP:=$(CURDIR)/hardware
@@ -25,7 +25,13 @@ INCLUDE+=-I$(CURDIR)/Utilities/STM32_EVAL/STM3240_41_G_EVAL
 INCLUDE+=-I$(CURDIR)/USB
 INCLUDE+=-I$(CURDIR)/Libraries/STM32_USB_OTG_Driver/inc
 INCLUDE+=-I$(CURDIR)/Libraries/STM32_USB_Device_Library/Core/inc
-INCLUDE+=-I$(CURDIR)/Libraries/STM32_USB_Device_Library/Class/hid/inc
+
+##INCLUDE+=-I$(CURDIR)/Libraries/STM32_USB_Device_Library/Class/hid/inc
+##INCLUDE+=-I$(CURDIR)/USB/HID
+
+INCLUDE+=-I$(CURDIR)/Libraries/STM32_USB_Device_Library/Class/cdc/inc
+INCLUDE+=-I$(CURDIR)/USB/VCP
+
 
 BUILD_DIR = $(CURDIR)/build
 BIN_DIR = $(CURDIR)/binary
@@ -36,9 +42,13 @@ vpath %.c $(CURDIR)/Libraries/STM32F4xx_StdPeriph_Driver/src \
           $(CURDIR)/Libraries/syscall $(CURDIR)/hardware $(FREERTOS) \
           $(FREERTOS)/portable/MemMang $(FREERTOS)/portable/GCC/ARM_CM4F \
           $(CURDIR)/Libraries/STM32_USB_Device_Library/Core/src \
-          $(CURDIR)/Libraries/STM32_USB_Device_Library/Class/hid/src \
+          $(CURDIR)/Libraries/STM32_USB_Device_Library/Class/cdc/src \
           $(CURDIR)/Libraries/STM32_USB_OTG_Driver/src \
-          $(CURDIR)/USB
+          $(CURDIR)/USB \
+          $(CURDIR)/USB/VCP
+
+#          $(CURDIR)/USB/HID
+#          $(CURDIR)/Libraries/STM32_USB_Device_Library/Class/hid/src 
           
 vpath %.s $(STARTUP)
 ASRC=startup_stm32f4xx.s
@@ -53,7 +63,8 @@ SRC+=usbd_core.c
 SRC+=usbd_ioreq.c
 SRC+=usbd_req.c
 
-SRC+=usbd_hid_core.c
+##SRC+=usbd_hid_core.c
+SRC+=usbd_cdc_core.c
 
 SRC+=usb_dcd.c
 SRC+=usb_dcd_int.c
@@ -62,6 +73,7 @@ SRC+=usb_core.c
 SRC+=usb_bsp.c
 SRC+=usbd_desc.c
 SRC+=usbd_usr.c
+SRC+=usbd_cdc_vcp.c
 
 # FreeRTOS Source Files
 SRC+=port.c
@@ -92,7 +104,7 @@ SRC+=stm32f4xx_rtc.c
 #SRC+=stm32f4xx_crc.c
 SRC+=stm32f4xx_exti.c
 #SRC+=stm32f4xx_iwdg.c
-#SRC+=stm32f4xx_spi.c
+SRC+=stm32f4xx_spi.c
 #SRC+=stm32f4xx_cryp.c
 #SRC+=stm32f4xx_flash.c
 #SRC+=stm32f4xx_lptim.c
